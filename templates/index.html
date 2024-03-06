@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Title Here</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main_page_styles.css') }}">
+</head>
+<body>
+    <div id="terminal">
+        <div class="terminal-header">
+            <span class="terminal-button" id="close-button"></span>
+            <span class="terminal-button" id="minimize-button"></span>
+            <span class="terminal-button" id="expand-button"></span>
+        </div>
+        <div class="terminal-body">
+            <div class="terminal-content" id="terminal-content">
+                <br> <!-- New line -->
+            </div>
+            <div id="command-line">
+                <span id="prompt">$</span>
+                <input type="text" id="command-input" autofocus>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

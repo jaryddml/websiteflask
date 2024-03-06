@@ -1,0 +1,101 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #050B1B; /* Dark navy blue */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Existing styles */
+
+#terminal {
+    width: 900px; /* Adjust terminal width */
+    height: 650px; /* Adjust terminal height */
+    background-color: #2C003E; /* Dark purple */
+    border: 2px solid #D6A2E8; /* Light purple */
+    border-radius: 5px;
+    box-shadow: 0 0 45px rgba(214, 162, 232, 0.5); /* Glow effect */
+    outline: 2px solid #4A235A; /* Faint outline */
+}
+
+.terminal-header {
+    background-color: #4A235A; /* Dark purple */
+    padding: 5px;
+}
+
+.terminal-button {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.terminal-body {
+    padding: 10px;
+    height: calc(100% - 50px); /* Adjusted height */
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.terminal-content {
+    line-height: 1.5;
+    min-height: 100%; /* Ensure content fills available space */
+    color: #fff; /* Set text color to white */
+}
+
+#command-line {
+    display: flex;
+    background-color: #4A235A; /* Dark purple */
+    padding-top: 0px; /* Add padding to separate input from terminal content */
+}
+
+#prompt {
+    color: #ff7f00; /* Orange prompt */
+    padding: 0 5px; /* Add padding around the prompt */
+}
+
+#command-input {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    color: #fff; /* White text */
+    font-family: 'Courier New', Courier, monospace;
+    font-size: inherit; /* Match the text size with terminal content */
+    width: calc(100% - 25px); /* Adjust width to fit within terminal */
+}
+
+.mac-buttons {
+    display: flex;
+    justify-content: flex-end;
+    padding: 5px;
+    position: relative; /* Ensure the buttons are positioned correctly */
+    z-index: 9999;
+}
+
+.mac-button {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+    position: relative; /* Ensure the buttons are positioned correctly */
+}
+
+.mac-button:nth-child(1) {
+    background-color: #ff5f57; /* Red button */
+}
+
+.mac-button:nth-child(2) {
+    background-color: #ffbd2e; /* Yellow button */
+}
+
+.mac-button:nth-child(3) {
+    background-color: #28ca42; /* Green button */
+}
+
+.terminal-body {
+    padding: 10px;
+    overflow-y: auto; /* Enable vertical scrolling */
+}
