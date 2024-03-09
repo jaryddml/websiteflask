@@ -52,5 +52,39 @@
     <footer class="footer">
         <p>&copy; 2024 Super Cool Bullion Finder. All rights reserved.</p>
     </footer>
+    <script>
+        let nextPage = 1; // Initialize nextPage to 1 or the next page you need to load
+            window.fetchingResults = false; // Initialize a flag to prevent multiple fetch calls during a single scroll
+
+            window.onscroll = function() {
+                // Check if the user has scrolled to the bottom of the page
+                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
+                    loadMoreResults(); // Load more results
+                }
+            };
+        
+        function loadMoreResults() {
+            if (window.fetchingResults) return; // Prevent multiple calls
+            window.fetchingResults = true; // Flag to indicate fetching is in progress
+
+            fetch(`/app/results?page=${nextPage}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultsContainer = document.querySelector('.results-container');
+                resultsContainer.innerHTML += data.html; // Append the new results
+                nextPage = data.next_page; // Update the nextPage variable
+                window.fetchingResults = false; // Reset fetching flag
+            })
+            .catch(error => {
+                console.error('Error loading more results:', error);
+                window.fetchingResults = false;
+            });
+        }
+
+        </script>
+        
+        
 </body>
 </html>
