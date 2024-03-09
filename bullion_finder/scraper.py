@@ -1,15 +1,14 @@
 import json
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from pyvirtualdisplay import Display
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-
-
 class BaseScraper:
-    def __init__(self, search_query):
+    def __init__(self, search_query=""):
         self.search_query = search_query
 
     def get_url(self):
@@ -18,97 +17,152 @@ class BaseScraper:
     def scrape(self):
         raise NotImplementedError("Subclasses must implement scrape method")
 
-
 class JMBullionScraper(BaseScraper):
-    def get_url(self):
-        return f"https://www.jmbullion.com/search/?q={self.search_query}"
+    def __init__(self, search_query=""):
+        super().__init__(search_query)
+        self.home_url = "https://www.jmbullion.com"
+
+    def get_url(self, page=1):
+        if page == 1:
+            return f"{self.home_url}/search/?q="
+        else:
+            # Adjusted to follow the pagination structure you provided
+            return f"{self.home_url}/search/?q=#/?_=1&page={page}"
 
     def scrape(self):
+        results = []
+        page = 1
+
+        display = Display(visible=1, size=(800, 600))
+        display.start()
+        driver = webdriver.Chrome()
+
         try:
-            print("Fetching URL...")
-            home_url = "https://www.jmbullion.com/"
-            
+            # Start by visiting the homepage to ensure session cookies are set
+            driver.get(self.home_url)
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.TAG_NAME, "body"))
+            )
+
+            while True:
+                current_url = self.get_url(page)
+                driver.get(current_url)
+                WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "product")))
         
-            display = Display(visible=0, size=(800, 600)) #Change 0 to 1 for visible
-            display.start()
-            driver = webdriver.Chrome()
-            driver.get(home_url)
-            driver.get(self.get_url())
-            # Wait for specific elements to load instead of time.sleep()
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "product")))
-            
-            print("URL fetched, parsing HTML...")
-            soup = BeautifulSoup(driver.page_source, "html.parser")
-            print("HTML parsed, quitting driver...")
+
+                soup = BeautifulSoup(driver.page_source, "html.parser")
+                products = soup.find_all("div", class_="product type-product status-publish hentry mainproductIn cat-product first instock")
+
+                if not products:
+                    print(f"No more products found at page {page}.")
+                    break
+
+                for product in products:
+                    # Your original logic for parsing product details
+                    # Make sure to adjust these selectors based on actual page structure
+                    title = product.find("span", class_="title").get_text(strip=True)
+                    price = product.find("span", class_="price").get_text(strip=True)
+                    link = product.find("a", href=True)['href']
+                    image = product.find("img")['src']
+
+                    result = {
+                        'title': title,
+                        'price': price,
+                        'link': self.home_url + link if not link.startswith(self.home_url) else link,
+                        'image': image
+                    }
+                    results.append(result)
+
+                pagination_table = driver.find_elements(By.CSS_SELECTOR, "table.pagination.top")
+                if pagination_table:
+                    next_button = pagination_table[0].find_elements(By.CSS_SELECTOR, "td.searchspring-next")
+                    if next_button and "none" in next_button[0].get_attribute("style"):
+                        print("Reached the last page.")
+                        break
+
+                page += 1
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
             driver.quit()
             display.stop()
 
-            products = soup.find_all("div", class_="product type-product status-publish hentry mainproductIn cat-product first instock")
-            results = []
-            for product in products[:50]:
-                title = product.find("span", class_="title")
-                price = product.find("span", class_="price")
-                link = product.find("a", href=True)['href'] if product.find("a", href=True) else None
-                image_tag = product.find("img")
-                image = image_tag['src'] if image_tag else None
-                if title and price and link:
-                    result = {
-                        'title': title.text.strip(),
-                        'price': price.text.strip(),
-                        'link': link
-                    }
-                    if image:
-                        result['image'] = image
-                    results.append(result)
-            print("Scraping completed.")
-            return results
-        except Exception as e:
-            print("An error occurred:", e)
+        return results
 
 
 class APMEXScraper(BaseScraper):
-    def get_url(self):
-        return f"https://www.apmex.com/search?&q={self.search_query}"
+    def __init__(self, search_query=""):
+        super().__init__(search_query)
+        self.base_url = "https://www.apmex.com"
+
+    def get_url(self, page=1):
+        start_offset = 80 * (page - 1)  # Calculate the start offset for pagination
+        if page == 1:
+            return f"{self.base_url}/search?&q="
+        else:
+            # URL adjusted for pagination using start offset
+            return f"{self.base_url}/search?&q=*&rows=80&view=grid&version=V2&start={start_offset}"
 
     def scrape(self):
+        results = []
+        page = 1
+
+        display = Display(visible=1, size=(1200, 1200))
+        display.start()
+        driver = webdriver.Chrome()
+
         try:
-            print("Fetching URL...")
-            URL = self.get_url()
-            
-            display = Display(visible=0, size=(800, 600))
-            display.start()   
-            driver = webdriver.Chrome()
-            driver.get(URL)
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "product-essential")))
-            
-            print("URL fetched, parsing HTML...")
-            soup = BeautifulSoup(driver.page_source, "html.parser")
-            print("HTML parsed, quitting driver...")
+            driver.get(self.base_url)  # Optionally start at the base URL
+
+            while True:
+                current_url = self.get_url(page=page)
+                print(f"Fetching {current_url}...")
+                driver.get(current_url)
+                
+                try:
+                    # Wait for the products to load on the page
+                    WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".product-essential")))
+                except TimeoutException:
+                    print("Timeout waiting for products to load. Ending scraping.")
+                    break
+                
+                soup = BeautifulSoup(driver.page_source, "html.parser")
+                products = soup.find_all("div", class_="product-essential")
+                if not products:
+                    print("No more products found. Ending scraping.")
+                    break
+
+                for product in products:
+                    title_element = product.find("div", class_="mod-product-title")  # Adjust the class name as necessary
+                    title = title_element.get_text(strip=True) if title_element else "Title Not Found"
+                    
+                    price_element = product.find("span", class_="price")  # Adjust the class name as necessary
+                    price = price_element.get_text(strip=True) if price_element else "Price Not Found"
+                    
+                    link_element = product.find("a", class_="item-link")  # Adjust the class name as necessary
+                    link = "https://www.apmex.com" + link_element['href'] if link_element else "Link Not Found"
+                    
+                    image_element = product.find("img", class_="lazy")  # Adjust the class name as necessary
+                    image = image_element['src'] if image_element else "Image Not Found"
+                    
+                    result = {
+                        'title': title,
+                        'price': price,
+                        'link': link,
+                        'image': image
+                    }
+                    results.append(result)
+
+                page += 1  # Increment page for next iteration
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
             driver.quit()
             display.stop()
 
-            products = soup.find_all("div", class_="product-essential")
-            results = []
-            for product in products[:50]:
-                title = product.find("div", class_="mod-product-title")
-                price = product.find("span", class_="price")
-                link = product.find("a", class_="item-link")['href'] if product.find("a", class_="item-link") else None
-                link = ("https://www.apmex.com/" + link)
-                imagetag = product.find("img", class_="lazy")
-                image = imagetag["src"] if imagetag else None
-                if title and price and link:
-                    result = {
-                        'title': title.text.strip(),
-                        'price': price.text.strip(),
-                        'link': link
-                    }
-                    if image:
-                        result['image'] = image
-                    results.append(result)
-            print("Scraping completed.")
-            return results
-        except Exception as e:
-            print("An error occurred:", e)
+        return results
 
 
 def main():
