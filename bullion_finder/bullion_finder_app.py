@@ -79,33 +79,43 @@ def search():
     save_to_json(aggregated_results)
     return redirect(url_for('bullion_finder_app.results', search_query=search_query))
 
+from flask import jsonify
+
+from flask import jsonify
+
+from flask import request, render_template_string, jsonify
+
 @bullion_finder_app.route('/results')
 def results():
-    search_query = request.args.get('search_query')
-    sort_by = request.args.get('sort_by')
+    page = int(request.args.get('page', 1))
+    items_per_page = 21
+    start = (page - 1) * items_per_page
+    end = start + items_per_page
 
-    if search_query:
-        scraper_classes = {
-            'jmbullion': JMBullionScraper,
-            'apmex': APMEXScraper,
-        }
+    # Load your JSON data as before
+    try:
+        with open(json_file_path, "r") as f:
+            all_data = json.load(f)
+    except FileNotFoundError:
+        all_data = []
 
-        aggregated_results = []
+    paginated_data = all_data[start:end]
 
-        for website, scraper_class in scraper_classes.items():
-            scraper = scraper_class(search_query)
-            results = scraper.scrape()
-            if results:
-                aggregated_results.extend(results)
-
-        # Filter out items with no prices
-        aggregated_results = [item for item in aggregated_results if item.get('price')]
-
-        save_to_json(aggregated_results)
+    # Check if the request is AJAX
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Return only the HTML for the products
+        products_html = render_template_string('''
+        {% for result in paginated_data %}
+            <li class="result-item">
+                <img src="{{ result.image }}" alt="{{ result.title }}">
+                <div class="item-info">
+                    <a href="{{ result.link }}">{{ result.title }}</a>
+                    <div class="price">{{ result.price }}</div>
+                </div>
+            </li>
+        {% endfor %}
+        ''', paginated_data=paginated_data)
+        return jsonify(html=products_html, next_page=page+1)
     else:
-        aggregated_results = load_from_json()
-
-    if sort_by:
-        aggregated_results = sort_results(aggregated_results, sort_by)
-
-    return render_template('search_results.html', results=aggregated_results)
+        # Initial page load
+        return render_template('search_results.html', results=paginated_data, next_page=page+1)
