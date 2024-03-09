@@ -1,8 +1,9 @@
 import os
 import json
 from flask import Blueprint, Flask, render_template, request, redirect, url_for
-
 from .scraper import JMBullionScraper, APMEXScraper
+from flask import jsonify
+from flask import render_template_string
 
 # Create a blueprint for the bullion finder app
 bullion_finder_app = Blueprint('bullion_finder_app', __name__, template_folder="../templates", static_folder="../static")
@@ -79,11 +80,6 @@ def search():
     save_to_json(aggregated_results)
     return redirect(url_for('bullion_finder_app.results', search_query=search_query))
 
-from flask import jsonify
-
-from flask import jsonify
-
-from flask import request, render_template_string, jsonify
 
 @bullion_finder_app.route('/results')
 def results():
