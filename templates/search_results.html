@@ -26,7 +26,7 @@
             </form>
             <!-- Sort form -->
             <form action="/results" method="get" class="sort-form">
-                <select name="sort_by" onchange="this.form.submit()">
+                <select id="sortPrice" onchange="sortResults()">
                     <option value="">Sort by...</option>
                     <option value="price_asc">Price Ascending</option>
                     <option value="price_desc">Price Descending</option>
@@ -83,6 +83,41 @@
             });
         }
 
+        </script>
+
+
+        <script>
+    // Function to handle sort preference change
+        function sortResults() {
+            let sortOrder = document.getElementById('sortPrice').value;
+            localStorage.setItem('sortOrder', sortOrder); // Store sorting preference
+            sortAndReorderResults(sortOrder);
+            }
+
+          // Function to sort and reorder results according to the sort order
+        function sortAndReorderResults(sortOrder) {
+            let resultsContainer = document.querySelector('.results-container');
+            let results = Array.from(resultsContainer.getElementsByClassName('result-item'));  
+
+
+    results.sort((a, b) => {
+        let priceA = parseFloat(a.querySelector('.price').textContent.replace('$', '').replace(',', ''));
+        let priceB = parseFloat(b.querySelector('.price').textContent.replace('$', '').replace(',', ''));
+        
+        if (sortOrder === 'price_asc') {
+            return priceA - priceB;
+        } else if (sortOrder === 'price_desc') {
+            return priceB - priceA;
+        }
+    });
+
+    // Clear the current results and re-append them in sorted order
+    while (resultsContainer.firstChild) {
+        resultsContainer.removeChild(resultsContainer.firstChild);
+    }
+
+    results.forEach(result => resultsContainer.appendChild(result));
+} 
         </script>
         
         
