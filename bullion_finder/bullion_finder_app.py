@@ -28,58 +28,47 @@ def load_from_json():
     except FileNotFoundError:
         return []
 
-# Function to sort results based on price
-def sort_results(data, sort_by):
-    def get_price_value(item):
-        price_str = item.get('price', '').replace('$', '').replace(',', '').strip()
-        return float(price_str) if price_str else float('inf')  # Return infinity if price is empty
-
-    if sort_by == "price_asc":
-        return sorted(data, key=lambda x: get_price_value(x))
-    elif sort_by == "price_desc":
-        return sorted(data, key=lambda x: get_price_value(x), reverse=True)
-    else:
-        return data
-
-# Function to sort results by price
-def sort_results_by_price(data, sort_order):
-    def get_price_value(item):
-        price_str = item.get('price', '').replace('$', '').replace(',', '').strip()
-        return float(price_str) if price_str else float('inf')  # Return infinity if price is empty
-
-    sorted_data = sorted(data, key=lambda x: get_price_value(x))
-    if sort_order == 'desc':
-        sorted_data.reverse()
-    return sorted_data
 
 # Define routes for the bullion finder app
 @bullion_finder_app.route('/')
 def index():
     return render_template('bullion_finder.html')
 
-@bullion_finder_app.route('/search', methods=['POST'])
+
+@bullion_finder_app.route('/search', methods=['POST', 'GET'])
 def search():
-    search_query = request.form['search_query']
-
-    scraper_classes = {
-        'jmbullion': JMBullionScraper,
-        'apmex': APMEXScraper,
-    }
-
-    aggregated_results = []
-
-    for website, scraper_class in scraper_classes.items():
-        scraper = scraper_class(search_query)
-        results = scraper.scrape()
-        if results:
-            aggregated_results.extend(results)
-
-    # Filter out items with no prices
-    aggregated_results = [item for item in aggregated_results if item.get('price')]
-
-    save_to_json(aggregated_results)
-    return redirect(url_for('bullion_finder_app.results', search_query=search_query))
-
+    # Check if it's a POST request (initial search) or a GET request (pagination)
+    if request.method == 'POST':
+        search_query = request.form['search_query'].lower()
+    else:
+        search_query = request.args.get('search_query', '').lower()
+    
+    page = request.args.get('page', 1, type=int)
+    items_per_page = 21
+    
+    # Load data from JSON file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    json_file_path = os.path.join(current_dir, "scraped_results.json")
+    try:
+        with open(json_file_path, "r") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        data = []
+    
+    # Filter data based on search query
+    filtered_data = [item for item in data if search_query in item['title'].lower()]
+    
+    # Pagination logic
+    start = (page - 1) * items_per_page
+    end = start + items_per_page
+    paginated_data = filtered_data[start:end]
+    
+    # For AJAX requests, return JSON with paginated data
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify(results=paginated_data, has_more=(end < len(filtered_data)))
+    
+    # For initial load or non-AJAX pagination, render template with paginated data
+    return render_template('search_results.html', results=paginated_data, search_query=search_query, next_page=page + 1, has_more=(end < len(filtered_data)))
 
 @bullion_finder_app.route('/results')
 def results():
