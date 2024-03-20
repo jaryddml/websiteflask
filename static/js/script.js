@@ -1,82 +1,89 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Get terminal elements
     const terminalContent = document.getElementById('terminal-content');
     const commandInput = document.getElementById('command-input');
+    let commandHistory = [];
+    let historyIndex = -1;
 
-    // Set focus to command input field
     commandInput.focus();
 
-    // Typing effect for welcome text
-    const welcomeText = "Welcome to Cyntax Error. A place of software excellence and software solutions.\nType 'help' for a list of commands and services.";
-    typeText(welcomeText); // Apply typing effect to welcome message
+    const typeText = (text, clear = false) => {
+        if (clear) terminalContent.innerHTML = '';
+        let index = 0;
+        const speed = 10; // Typing speed in milliseconds
+        const typeCharacter = () => {
+            if (index < text.length) {
+                if (text.charAt(index) === '\n') {
+                    terminalContent.innerHTML += '<br>';
+                } else {
+                    terminalContent.innerHTML += text.charAt(index);
+                }
+                index++;
+                setTimeout(typeCharacter, speed);
+            }
+        };
+        typeCharacter();
+    };
 
-    // Handle command input
+    const initialMessage = "Welcome to Cyntax Error. A place of software excellence and software solutions.\nType 'help' for a list of commands and services.";
+    typeText(initialMessage);
+
+    const handleCommand = (command) => {
+        commandHistory.push(command);
+        historyIndex = commandHistory.length;
+        switch (command.toLowerCase()) {
+            case 'help':
+                const helpText = "List of available commands:\n- help - Display available commands\n- clear - Clear the terminal\n- bio - Tells you a little about myself\n- contact - Contact information\n- projects - See project examples";
+                typeText(helpText, true);
+                break;
+            case 'clear':
+                terminalContent.innerHTML = '';
+                break;
+            case 'bio':
+                // Assuming loadContent is defined to fetch and display content
+                loadContent('bio');
+                break;
+            case 'contact':
+                // Assuming loadContent is defined to fetch and display content
+                loadContent('contact');
+                break;
+            case 'projects':
+                // Assuming loadContent is defined to fetch and display content
+                loadContent('projects');
+                break;
+            default:
+                typeText(`${command}: command not found`, true);
+        }
+    };
+
     commandInput.addEventListener('keyup', (event) => {
         if (event.key === 'Enter') {
             const command = commandInput.value.trim();
-            handleCommand(command);
-            commandInput.value = ''; // Clear command input
+            if (command !== '') {
+                handleCommand(command);
+            }
+            commandInput.value = '';
+        } else if (event.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+            event.preventDefault(); // Prevent the cursor from moving to the start of the input
+        } else if (event.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                commandInput.value = '';
+            }
+            event.preventDefault(); // Prevent the cursor from moving to the end of the input
         }
     });
+
+    // Load content dynamically
+    const loadContent = (filename) => {
+        // Placeholder for content loading logic
+        // Use fetch API or similar to load content dynamically
+        console.log(`Loading content for: ${filename}`);
+        // Example: fetch(`/content/${filename}.txt`).then...
+    };
 });
-
-// Function to handle entered commands
-function handleCommand(command) {
-    const terminalContent = document.getElementById('terminal-content');
-
-    // Display entered command
-    const commandLine = document.createElement('div');
-    commandLine.innerHTML = `<span id="prompt">$</span> ${command}`;
-    terminalContent.appendChild(commandLine);
-
-    // Execute command
-    switch (command.toLowerCase()) {
-        case 'help':
-            const helpText = "List of available commands:\n- help - Display available commands\n- clear - Clear the terminal\n- bio - Tells you a little about myself\n- contact - Contact information\n- projects - See project examples";
-            typeText(helpText); // Apply typing effect to command output
-            break;
-        case 'clear':
-            terminalContent.innerHTML = ''; // Clear terminal content
-            break;
-        case 'bio':
-            const bioText = "Jaryd: Your Trusted Software Architect, Built for Efficiency.\n\nMy Story: I'm Jaryd, a passionate software developer with a unique blend of business acumen and technical expertise. My journey began in retail management, where I honed my ability to identify customer needs and translate them into actionable solutions. This experience has become a cornerstone of my development approach, allowing me to understand your challenges and craft efficient software solutions that directly address them.\n\nWhat I Offer:\n- Strategic Consulting: My background in retail provides valuable insights, allowing me to collaborate with you to understand your business goals and translate them into a clear technical roadmap.\n- Technical Expertise: I'm proficient in various programming languages and frameworks, ensuring I can build robust and scalable solutions tailored to your specific needs.\n- Focus on Efficiency: I understand the importance of minimizing your project costs and timeframes. I prioritize clean code, efficient development practices, and clear communication to ensure your project stays on track and within budget.\n\nWhy Choose Me?\n- Client-Centric Approach: I prioritize understanding your business goals and tailoring solutions that seamlessly integrate with your existing infrastructure and processes.\n- Flexibility & Adaptability: I thrive in fast-paced environments and adapt to your specific needs, whether it's short-term project completion or long-term partnerships.\n- Passion & Dedication: I'm genuinely passionate about software development and committed to delivering the best possible solutions for your business.\n\nInvest in Efficiency. Contact Jaryd today!";
-            typeText(bioText); // Apply typing effect to command output
-            break;
-        case 'contact':
-            const contactText = "Contact Information:\n- Email: jaryddml@gmail.com\n- LinkedIn: https://www.linkedin.com/in/jaryd-lloyd-9318b722a/ \n- GitHub: github.com/jaryddml\n\nFeel free to contact me at anytime with any questions you may have.\n My response times are typically within one to two business days.\nI look forward to hearing from you.\n";
-            typeText(contactText); // Apply typing effect to command output
-            break;
-        case 'projects':
-            const projectsText = "Project examples will be available in the future. Stay tuned!";
-            typeText(projectsText); // Apply typing effect to command output
-            break;
-        default:
-            const errorText = `${command}: command not found`;
-            typeText(errorText); // Apply typing effect to command output
-    }
-
-    // Scroll to bottom of terminal
-    terminalContent.scrollTop = terminalContent.scrollHeight;
-}
-
-// Function to apply typing effect to text
-function typeText(text) {
-    const terminalContent = document.getElementById('terminal-content');
-    const typingSpeed = 10; // Adjust typing speed (milliseconds)
-    let index = 0;
-
-    function typeCharacter() {
-        if (index < text.length) {
-            const char = text.charAt(index);
-            if (char === '\n') {
-                terminalContent.innerHTML += '<br>';
-            } else {
-                terminalContent.innerHTML += char;
-            }
-            index++;
-            setTimeout(typeCharacter, typingSpeed);
-        }
-    }
-
-    typeCharacter();
-}

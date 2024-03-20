@@ -11,13 +11,15 @@ body {
 /* Existing styles */
 
 #terminal {
-    width: 900px; /* Adjust terminal width */
-    height: 650px; /* Adjust terminal height */
-    background-color: #2C003E; /* Dark purple */
-    border: 2px solid #D6A2E8; /* Light purple */
+    width: 900px;
+    height: 650px;
+    background-color: #2C003E;
+    border: 2px solid #D6A2E8;
     border-radius: 5px;
-    box-shadow: 0 0 45px rgba(214, 162, 232, 0.5); /* Glow effect */
-    outline: 2px solid #4A235A; /* Faint outline */
+    box-shadow: 0 0 45px rgba(214, 162, 232, 0.5);
+    outline: 2px solid #4A235A;
+    display: flex;
+    flex-direction: column;
 }
 
 .terminal-header {
@@ -98,4 +100,27 @@ body {
 .terminal-body {
     padding: 10px;
     overflow-y: auto; /* Enable vertical scrolling */
+}
+.terminal-header, .terminal-body, #command-line {
+    padding: 10px;
+}
+
+.terminal-header {
+    background-color: #4A235A;
+}
+
+.terminal-body {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+#command-line {
+    background-color: #4A235A;
+}
+
+@media (max-width: 768px) {
+    #terminal {
+        width: 95%;
+        height: 95vh; /* Adjust for smaller screens */
+    }
 }
